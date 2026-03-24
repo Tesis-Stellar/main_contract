@@ -1,0 +1,15 @@
+```gitignore
+# AI tooling
+.gemini/
+.cursor/
+.vscode/
+.idea/
+
+# Local env files
+.env
+.env.local
+
+# Node
+node_modules/
+dist/
+```
