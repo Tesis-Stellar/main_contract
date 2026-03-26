@@ -1,0 +1,352 @@
+generator client {
+  provider        = "prisma-client-js"
+  previewFeatures = ["multiSchema"]
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+  schemas  = ["ticketing", "public"]
+}
+
+enum UserRole {
+  CUSTOMER
+  ADMIN
+}
+
+enum DocumentType {
+  CC
+  CE
+  TI
+  PP
+}
+
+enum VenueType {
+  ARENA
+  STADIUM
+  THEATER
+  CLUB
+  COLISEUM
+  CONVENTION_CENTER
+}
+
+enum EventCategory {
+  CONCERTS
+  THEATER
+  SPORTS
+  FESTIVALS
+  COMEDY
+  FAMILY
+}
+
+enum EventStatus {
+  DRAFT
+  PUBLISHED
+  SOLD_OUT
+  CANCELLED
+}
+
+enum SeatStatus {
+  AVAILABLE
+  HELD
+  SOLD
+  BLOCKED
+}
+
+enum CartStatus {
+  ACTIVE
+  EXPIRED
+  ABANDONED
+}
+
+enum OrderStatus {
+  PENDING
+  PAID
+  CANCELLED
+}
+
+enum TicketStatus {
+  ACTIVE
+  USED
+  CANCELLED
+}
+
+enum PaymentMethod {
+  CARD
+  PSE
+  CASHPOINT
+}
+
+enum SeatHoldStatus {
+  ACTIVE
+  EXPIRED
+  RELEASED
+  CONSUMED
+}
+
+model User {
+  id             String   @id @default(uuid())
+  firstName      String
+  lastName       String
+  email          String   @unique
+  passwordHash   String
+  documentType   DocumentType
+  documentNumber String   @unique
+  phone          String
+  role           UserRole @default(CUSTOMER)
+  createdAt      DateTime @default(now())
+  updatedAt      DateTime @updatedAt
+
+  cart      Cart?
+  orders    Order[]
+  seatHolds SeatHold[]
+  tickets   Ticket[]
+}
+
+model Venue {
+  id        String      @id @default(uuid())
+  name      String
+  city      String
+  address   String
+  type      VenueType
+  createdAt DateTime    @default(now())
+  updatedAt DateTime    @updatedAt
+
+  events   Event[]
+  sections VenueSection[]
+}
+
+model VenueSection {
+  id               String   @id @default(uuid())
+  venueId          String
+  name             String
+  capacity         Int
+  hasNumberedSeats Boolean
+  createdAt        DateTime @default(now())
+  updatedAt        DateTime @updatedAt
+
+  venue            Venue              @relation(fields: [venueId], references: [id], onDelete: Cascade)
+  eventTicketTypes EventTicketType[]
+  eventSeats       EventSeatInventory[]
+  seats            Seat[]
+
+  @@index([venueId])
+}
+
+model Seat {
+  id             String     @id @default(uuid())
+  venueSectionId String
+  row            String
+  number         Int
+  label          String
+  status         SeatStatus @default(AVAILABLE)
+  createdAt      DateTime   @default(now())
+  updatedAt      DateTime   @updatedAt
+
+  venueSection VenueSection        @relation(fields: [venueSectionId], references: [id], onDelete: Cascade)
+  cartItems    CartItem[]
+  eventSeats   EventSeatInventory[]
+  orderItems   OrderItem[]
+  seatHolds    SeatHold[]
+  tickets      Ticket[]
+
+  @@unique([venueSectionId, row, number])
+  @@index([venueSectionId])
+}
+
+model Event {
+  id               String        @id @default(uuid())
+  slug             String        @unique
+  title            String
+  description      String
+  category         EventCategory
+  city             String
+  venueId          String
+  organizer        String
+  bannerImage      String
+  posterImage      String
+  eventDate        DateTime
+  eventTime        String
+  isFeatured       Boolean       @default(false)
+  hasSeatSelection Boolean       @default(false)
+  status           EventStatus   @default(PUBLISHED)
+  createdAt        DateTime      @default(now())
+  updatedAt        DateTime      @updatedAt
+
+  venue           Venue                @relation(fields: [venueId], references: [id])
+  cartItems       CartItem[]
+  eventSeats      EventSeatInventory[]
+  orderItems      OrderItem[]
+  seatHolds       SeatHold[]
+  tickets         Ticket[]
+  ticketTypes     EventTicketType[]
+
+  @@index([category, city, eventDate])
+  @@index([venueId])
+}
+
+model EventSeatInventory {
+  id        String     @id @default(uuid())
+  eventId   String
+  seatId    String
+  sectionId String
+  status    SeatStatus @default(AVAILABLE)
+  createdAt DateTime   @default(now())
+  updatedAt DateTime   @updatedAt
+
+  event   Event        @relation(fields: [eventId], references: [id], onDelete: Cascade)
+  seat    Seat         @relation(fields: [seatId], references: [id], onDelete: Cascade)
+  section VenueSection @relation(fields: [sectionId], references: [id], onDelete: Cascade)
+
+  @@unique([eventId, seatId])
+  @@index([eventId, sectionId, status])
+}
+
+model EventTicketType {
+  id          String   @id @default(uuid())
+  eventId      String
+  name         String
+  description  String
+  price        Decimal  @db.Decimal(10, 2)
+  serviceFee   Decimal  @db.Decimal(10, 2)
+  availability Int
+  maxPerOrder  Int
+  sectionId    String?
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+
+  event      Event       @relation(fields: [eventId], references: [id], onDelete: Cascade)
+  section    VenueSection? @relation(fields: [sectionId], references: [id])
+  cartItems  CartItem[]
+  orderItems OrderItem[]
+  tickets    Ticket[]
+
+  @@index([eventId])
+  @@index([sectionId])
+}
+
+model Cart {
+  id        String     @id @default(uuid())
+  userId    String     @unique
+  status    CartStatus @default(ACTIVE)
+  expiresAt DateTime?
+  createdAt DateTime   @default(now())
+  updatedAt DateTime   @updatedAt
+
+  user      User       @relation(fields: [userId], references: [id], onDelete: Cascade)
+  items     CartItem[]
+  seatHolds SeatHold[]
+}
+
+model CartItem {
+  id           String   @id @default(uuid())
+  cartId       String
+  eventId      String
+  ticketTypeId String?
+  seatId       String?
+  quantity     Int
+  unitPrice    Decimal  @db.Decimal(10, 2)
+  serviceFee   Decimal  @db.Decimal(10, 2)
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+
+  cart       Cart            @relation(fields: [cartId], references: [id], onDelete: Cascade)
+  event      Event           @relation(fields: [eventId], references: [id], onDelete: Cascade)
+  ticketType EventTicketType? @relation(fields: [ticketTypeId], references: [id])
+  seat       Seat?           @relation(fields: [seatId], references: [id])
+
+  @@index([cartId])
+  @@index([eventId])
+  @@index([ticketTypeId])
+  @@index([seatId])
+}
+
+model Order {
+  id            String        @id @default(uuid())
+  userId        String
+  orderNumber   String        @unique
+  status        OrderStatus   @default(PAID)
+  subtotal      Decimal       @db.Decimal(10, 2)
+  serviceFees   Decimal       @db.Decimal(10, 2)
+  total         Decimal       @db.Decimal(10, 2)
+  buyerEmail    String
+  buyerPhone    String
+  paymentMethod PaymentMethod
+  createdAt     DateTime      @default(now())
+  updatedAt     DateTime      @updatedAt
+
+  user      User        @relation(fields: [userId], references: [id], onDelete: Cascade)
+  items     OrderItem[]
+  tickets   Ticket[]
+
+  @@index([userId, createdAt])
+}
+
+model OrderItem {
+  id           String   @id @default(uuid())
+  orderId       String
+  eventId       String
+  ticketTypeId  String?
+  seatId        String?
+  ticketLabel   String
+  price         Decimal  @db.Decimal(10, 2)
+  serviceFee    Decimal  @db.Decimal(10, 2)
+  quantity      Int
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+
+  order      Order           @relation(fields: [orderId], references: [id], onDelete: Cascade)
+  event      Event           @relation(fields: [eventId], references: [id])
+  ticketType EventTicketType? @relation(fields: [ticketTypeId], references: [id])
+  seat       Seat?           @relation(fields: [seatId], references: [id])
+  tickets    Ticket[]
+
+  @@index([orderId])
+  @@index([eventId])
+}
+
+model Ticket {
+  id           String       @id @default(uuid())
+  orderId       String
+  orderItemId   String?
+  userId        String
+  eventId       String
+  ticketTypeId  String?
+  seatId        String?
+  code          String       @unique
+  qrCode        String
+  status        TicketStatus @default(ACTIVE)
+  issuedAt      DateTime     @default(now())
+  createdAt     DateTime     @default(now())
+  updatedAt     DateTime     @updatedAt
+
+  order      Order           @relation(fields: [orderId], references: [id], onDelete: Cascade)
+  orderItem  OrderItem?      @relation(fields: [orderItemId], references: [id])
+  user       User            @relation(fields: [userId], references: [id], onDelete: Cascade)
+  event      Event           @relation(fields: [eventId], references: [id])
+  ticketType EventTicketType? @relation(fields: [ticketTypeId], references: [id])
+  seat       Seat?           @relation(fields: [seatId], references: [id])
+
+  @@index([userId, createdAt])
+  @@index([eventId])
+}
+
+model SeatHold {
+  id        String         @id @default(uuid())
+  eventId   String
+  seatId    String
+  userId    String
+  cartId    String?
+  expiresAt DateTime
+  status    SeatHoldStatus @default(ACTIVE)
+  createdAt DateTime       @default(now())
+  updatedAt DateTime       @updatedAt
+
+  event Event @relation(fields: [eventId], references: [id], onDelete: Cascade)
+  seat  Seat  @relation(fields: [seatId], references: [id], onDelete: Cascade)
+  user  User  @relation(fields: [userId], references: [id], onDelete: Cascade)
+  cart  Cart? @relation(fields: [cartId], references: [id], onDelete: SetNull)
+
+  @@index([eventId, seatId, status, expiresAt])
+  @@index([cartId])
+}
