@@ -146,10 +146,12 @@ model users {
 }
 
 model tickets {
-  id            String        @id(map: "pk_tickets") @default(dbgenerated("gen_random_uuid()")) @db.Uuid
-  order_item_id String        @db.Uuid
-  owner_user_id String        @db.Uuid
-  ticket_code   String        @unique(map: "uq_tickets_ticket_code")
+  id               String        @id(map: "pk_tickets") @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  contract_address String?
+  order_item_id    String?       @db.Uuid
+  owner_user_id String?       @db.Uuid
+  owner_wallet  String?
+  ticket_code   String?       @unique(map: "uq_tickets_ticket_code")
   ticket_root_id Int?
   version       Int?
   is_for_sale   Boolean       @default(false)
@@ -160,9 +162,10 @@ model tickets {
   cancelled_at  DateTime?     @db.Timestamptz(6)
   created_at    DateTime      @default(now()) @db.Timestamptz(6)
   updated_at    DateTime      @default(now()) @db.Timestamptz(6)
-  order_items   order_items   @relation(fields: [order_item_id], references: [id], onDelete: Cascade, onUpdate: NoAction, map: "fk_tickets_order_item")
-  users         users         @relation(fields: [owner_user_id], references: [id], onUpdate: NoAction, map: "fk_tickets_owner_user")
+  order_items   order_items?  @relation(fields: [order_item_id], references: [id], onDelete: Cascade, onUpdate: NoAction, map: "fk_tickets_order_item")
+  users         users?        @relation(fields: [owner_user_id], references: [id], onUpdate: NoAction, map: "fk_tickets_owner_user")
 
+  @@unique([contract_address, ticket_root_id, version])
   @@index([owner_user_id, status], map: "idx_tickets_owner_status")
   @@schema("ticketing")
 }

@@ -1,4 +1,4 @@
-```markdown
+
 # Contratos Inteligentes: Mecánica y Direcciones (Testnet)
 
 Este documento explica de manera sencilla cómo funcionan los contratos inteligentes de la plataforma y dónde se encuentran desplegados actualmente en la **Stellar Testnet**.

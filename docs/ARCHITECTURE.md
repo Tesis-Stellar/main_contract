@@ -1,4 +1,4 @@
-```markdown
+
 # Arquitectura Híbrida Web2.5 — Stellar Tickets
 
 La plataforma resuelve el problema de reventa especulativa y fraude en boletos digitales fusionando lo mejor de dos mundos: la velocidad y facilidad de Web2, con la trazabilidad y seguridad inmutable de Web3 (Soroban).
