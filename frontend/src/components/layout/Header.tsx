@@ -2,6 +2,7 @@ import { useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { Menu, X, ShoppingCart, User, Search } from "lucide-react";
 import { useAppContext } from "@/context/AppContext";
+import { ConnectWallet } from "@/components/ConnectWallet";
 
 const navItems = [
   { label: "Inicio", to: "/" },
@@ -42,6 +43,9 @@ export const Header = () => {
           <Link to={isLoggedIn ? "/mi-cuenta" : "/login"} className="hidden sm:flex items-center gap-1.5 px-3 py-2 text-sm font-semibold text-primary-foreground/80 hover:text-primary-foreground hover:bg-primary-foreground/10 rounded-lg transition-colors">
             <User className="w-4 h-4" /><span>{isLoggedIn ? "Mi Cuenta" : "Ingresar"}</span>
           </Link>
+          <div className="hidden sm:block ml-2">
+            <ConnectWallet />
+          </div>
           <button onClick={() => setMobileOpen(!mobileOpen)} className="lg:hidden p-2 text-primary-foreground/70 hover:text-primary-foreground rounded-lg transition-colors">
             {mobileOpen ? <X className="w-5 h-5" /> : <Menu className="w-5 h-5" />}
           </button>
