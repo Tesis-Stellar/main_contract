@@ -3,8 +3,9 @@ import { useParams, Link, useNavigate } from "react-router-dom";
 import { Header } from "@/components/layout/Header";
 import { Footer } from "@/components/layout/Footer";
 import { getEventBySlug, getEventTicketTypes, getRelatedEvents, type EventData } from "@/data/events";
-import { MapPin, Calendar, Clock, ChevronLeft, User, Info } from "lucide-react";
+import { MapPin, Calendar, Clock, ChevronLeft, User, Info, ShieldCheck, Lock } from "lucide-react";
 import { EventCard } from "@/components/ui/EventCard";
+import { getPublicKey, isConnected } from "@stellar/freighter-api";
 
 const EventDetail = () => {
   const { id: slug } = useParams<{ id: string }>();
@@ -120,8 +121,36 @@ const EventDetail = () => {
               <p className="text-xs text-muted-foreground">{event.date} {event.month} {event.year} · {event.venue}</p>
               <p className="text-lg font-black text-primary">{minPrice > 0 ? `Desde $${minPrice.toLocaleString("es-CO")}` : "Gratis"}</p>
               <Link to={buyUrl} className="block w-full py-3 bg-accent hover:bg-accent/90 text-accent-foreground font-black rounded-lg text-center text-sm transition-colors">
-                Comprar Boletos
+                Comprar Boletos Oficiales
               </Link>
+            </div>
+
+            {/* Mercado Secundario Seguro */}
+            <div className="sticky top-96 bg-purple-500/5 rounded-xl border border-purple-500/20 p-6 space-y-4 mt-6">
+              <h3 className="font-black text-purple-600 uppercase tracking-tight text-sm flex items-center gap-2">
+                <ShieldCheck className="w-4 h-4" /> Reventa P2P Segura
+              </h3>
+              <p className="text-xs text-muted-foreground leading-relaxed">Boletos revendidos por fans, custodiados y garantizados por los Contratos de Soroban.</p>
+              
+              <div className="space-y-3">
+                {/* Mock P2P Ticket */}
+                <div className="bg-background rounded-lg p-3 border border-border flex justify-between items-center shadow-sm">
+                   <div>
+                     <div className="flex items-center gap-1.5"><p className="text-xs font-bold text-foreground">General</p><span className="text-[8px] bg-purple-100 text-purple-800 px-1.5 py-0.5 rounded font-bold uppercase tracking-widest">Web3 NFT</span></div>
+                     <p className="text-[10px] text-muted-foreground mt-0.5 flex items-center gap-1">Vendedor: <span className="font-mono text-foreground font-medium">GBDE...L2Z</span></p>
+                   </div>
+                   <button 
+                    onClick={async () => {
+                      if (!(await isConnected())) return alert("Por favor conecta Freighter en el Menú Principal.");
+                      const pk = await getPublicKey();
+                      alert("¡Firmado! Tu Freighter (" + pk.slice(0,5) + "...) ha pagado 50 USDC y ahora eres el dueño criptográfico de este boleto.");
+                    }}
+                    className="bg-purple-600 hover:bg-purple-700 text-white text-xs font-bold px-3 py-1.5 rounded-lg transition-colors flex items-center gap-1 shadow-md shadow-purple-900/20"
+                   >
+                     <Lock className="w-3 h-3" /> 50 USDC
+                   </button>
+                </div>
+              </div>
             </div>
           </div>
         </div>

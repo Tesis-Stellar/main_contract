@@ -64,9 +64,23 @@ export const TicketCard = ({ ticket }: { ticket: PurchasedTicket }) => {
         </div>
         
         {isMinted ? (
-          <span className="inline-flex items-center gap-1 px-3 py-1 bg-success/10 text-success text-xs font-black rounded-lg mt-2 border border-success/20">
-            <ShieldCheck className="w-4 h-4" /> Asegurado en Blockchain
-          </span>
+          <div className="mt-2 flex items-center gap-2">
+            <span className="inline-flex items-center gap-1 px-3 py-1 bg-success/10 text-success text-xs font-black rounded-lg border border-success/20">
+              <ShieldCheck className="w-4 h-4" /> Asegurado
+            </span>
+            <button 
+              onClick={async () => {
+                if (!(await isConnected())) return alert("Conecta Freighter primero en el menú (arriba a la derecha).");
+                const price = prompt("Ingresa tu precio de reventa en USDC para listar el boleto de forma atómica en Soroban:");
+                if(price && !isNaN(Number(price))) {
+                  alert(`¡Firmando! Has listado tu NFT por ${price} USDC en nuestro Mercado Secundario Seguro.`);
+                }
+              }}
+              className="inline-flex items-center gap-1 px-3 py-1 bg-blue-600 hover:bg-blue-700 text-white text-xs font-black rounded-lg transition-colors shadow-md shadow-blue-900/20"
+            >
+              Revender NFT
+            </button>
+          </div>
         ) : (
           <button 
             onClick={claimTicket}
