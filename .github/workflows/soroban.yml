@@ -12,6 +12,9 @@ env:
 jobs:
   build_and_test:
     runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: ./contracts
     steps:
     - uses: actions/checkout@v4
 
@@ -22,19 +25,11 @@ jobs:
 
     - name: Cache dependencies
       uses: Swatinem/rust-cache@v2
-      
-    - name: Build Event Contract
-      working-directory: ./contracts/event_contract
+      with:
+        workspaces: contracts
+
+    - name: Build all contracts
       run: cargo build --target wasm32-unknown-unknown --release --verbose
 
-    - name: Test Event Contract
-      working-directory: ./contracts/event_contract
-      run: cargo test --verbose
-
-    - name: Build Factory Contract
-      working-directory: ./contracts/factory_contract
-      run: cargo build --target wasm32-unknown-unknown --release --verbose
-
-    - name: Test Factory Contract
-      working-directory: ./contracts/factory_contract
+    - name: Test all contracts
       run: cargo test --verbose
