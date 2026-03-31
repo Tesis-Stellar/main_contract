@@ -8,6 +8,10 @@
 # Local env files
 .env
 .env.local
+.env.deploy
+
+# Contract WASM builds (downloaded from CI)
+contracts/wasm/
 
 # Node
 node_modules/
