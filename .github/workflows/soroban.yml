@@ -23,17 +23,17 @@ jobs:
       with:
         targets: wasm32-unknown-unknown
 
+    - name: Install Stellar CLI
+      run: cargo install --locked stellar-cli --features opt
+
     - name: Cache dependencies
       uses: Swatinem/rust-cache@v2
       with:
         workspaces: contracts
-        key: soroban-v2
-
-    - name: Clean previous build
-      run: cargo clean --target wasm32-unknown-unknown --release 2>/dev/null || true
+        key: soroban-v3
 
     - name: Build all contracts
-      run: cargo build --target wasm32-unknown-unknown --release --verbose
+      run: stellar contract build
 
     - name: Test all contracts
       run: cargo test --verbose
