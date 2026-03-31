@@ -6,6 +6,11 @@ import { runIndexer } from './indexer';
 
 dotenv.config();
 
+// BigInt fields (e.g. cities.id) are not JSON-serializable by default
+(BigInt.prototype as any).toJSON = function () {
+  return Number(this);
+};
+
 const app = express();
 const prisma = new PrismaClient();
 const PORT = process.env.PORT || 3000;

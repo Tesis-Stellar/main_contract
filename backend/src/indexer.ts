@@ -67,7 +67,7 @@ export async function runIndexer() {
       for (const evt of eventsRes.events) {
         const topicExtracted = parseTopics(evt.topic);
         const eventName = topicExtracted[0]; 
-        const contractId = evt.contractId?.toString();
+        const contractId = typeof evt.contractId === 'string' ? evt.contractId : evt.contractId?.toString();
 
         // Skip events we can't parse or aren't tracking
         if (!eventName || !contractId) continue;
