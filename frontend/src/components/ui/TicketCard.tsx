@@ -5,7 +5,7 @@ import { useAppContext } from "@/context/AppContext";
 import { useState } from "react";
 
 export const TicketCard = ({ ticket }: { ticket: PurchasedTicket }) => {
-  const { secureTicketOnChain, listTicketForSale, cancelResaleListing } = useAppContext();
+  const { secureTicketOnChain, listTicketForSale, cancelResaleListing, walletAddress } = useAppContext();
   const [isMinting, setIsMinting] = useState(false);
   const [isMinted, setIsMinted] = useState(ticket.isSecuredOnChain ?? false);
   const [isListing, setIsListing] = useState(false);
@@ -14,6 +14,10 @@ export const TicketCard = ({ ticket }: { ticket: PurchasedTicket }) => {
   const [txHash, setTxHash] = useState<string | null>(null);
 
   const claimTicket = async () => {
+    if (!walletAddress) {
+      alert("Debes conectar tu wallet de Freighter antes de asegurar el boleto en blockchain. Haz clic en \"Conectar Wallet\" en la parte superior de la página.");
+      return;
+    }
     try {
       setIsMinting(true);
       const result = await secureTicketOnChain(ticket.id);
@@ -32,6 +36,10 @@ export const TicketCard = ({ ticket }: { ticket: PurchasedTicket }) => {
   };
 
   const handleListForSale = async () => {
+    if (!walletAddress) {
+      alert("Debes conectar tu wallet de Freighter antes de poner el boleto en reventa. Haz clic en \"Conectar Wallet\" en la parte superior de la página.");
+      return;
+    }
     const priceStr = prompt("Ingresa el precio de reventa en XLM:");
     if (!priceStr || isNaN(Number(priceStr)) || Number(priceStr) <= 0) return;
 
