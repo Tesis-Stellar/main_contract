@@ -784,7 +784,7 @@ app.get('/api/admin/contracts', authMiddleware, async (req, res) => {
     const user = await prisma.users.findUnique({ where: { id: (req as any).userId } });
     if (!user || user.role !== 'ADMIN') { res.status(403).json({ error: 'Acceso denegado' }); return; }
 
-    const factoryId = process.env.FACTORY_CONTRACT_ID || '';
+    const factoryId = process.env.ORGANIZER_PUBLIC || 'GBM6N2SUCK3Y6I5DHQKULZD3W27EYMU37VYHNKWLVBNS6VYZHRJPWJBT';
     
     // Fetch events that have a deployed contract
     const deployedEvents = await prisma.events.findMany({

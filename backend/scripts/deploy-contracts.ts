@@ -32,7 +32,7 @@ dotenv.config();
 
 const RPC_URL = process.env.SOROBAN_RPC_URL || 'https://soroban-testnet.stellar.org';
 const NETWORK_PASSPHRASE = Networks.TESTNET;
-const WASM_DIR = path.resolve(__dirname, '../../contracts/wasm');
+const WASM_DIR = path.resolve(__dirname, '../../contracts/target/wasm32-unknown-unknown/release');
 
 const server = new SorobanRpc.Server(RPC_URL);
 const prisma = new PrismaClient();
@@ -47,8 +47,8 @@ async function fundAccount(publicKey: string): Promise<void> {
   if (!response.ok) {
     const text = await response.text();
     // Already funded is OK
-    if (!text.includes('createAccountAlreadyExist')) {
-      throw new Error(`Friendbot failed: ${text}`);
+    if (!text.includes('createAccountAlreadyExist') && !text.includes('rate limit')) {
+      console.warn(`  Friendbot warning: ${text}`);
     }
     console.log('  (already funded)');
   }
@@ -110,7 +110,7 @@ async function uploadWasm(adminKeypair: Keypair, wasmPath: string): Promise<Buff
   const result = await submitTx(tx, adminKeypair);
 
   // Extract wasm hash from result
-  const returnValue = result.returnValue;
+  const returnValue = (result as any).returnValue;
   if (!returnValue) throw new Error('No return value from WASM upload');
   const wasmHash = returnValue.bytes();
   console.log(`  WASM Hash: ${Buffer.from(wasmHash).toString('hex')}`);
@@ -133,7 +133,7 @@ async function deployContract(adminKeypair: Keypair, wasmHash: Buffer, salt: Buf
 
   const result = await submitTx(tx, adminKeypair);
 
-  const returnValue = result.returnValue;
+  const returnValue = (result as any).returnValue;
   if (!returnValue) throw new Error('No return value from contract deploy');
   const contractAddress = Address.fromScVal(returnValue).toString();
   console.log(`  Contract: ${contractAddress}`);
@@ -177,10 +177,10 @@ async function initializeEventContract(
 async function main() {
   console.log('=== Soroban Contract Deployment to Testnet ===\n');
 
-  // 1. Generate keypairs
+  // 1. Load keys
   const adminKeypair = Keypair.random();
   const platformKeypair = Keypair.random();
-  const organizerKeypair = Keypair.random();
+  const organizerKeypair = process.env.ORGANIZER_SECRET ? Keypair.fromSecret(process.env.ORGANIZER_SECRET) : Keypair.random();
 
   console.log('Keypairs:');
   console.log(`  Admin:     ${adminKeypair.publicKey()}`);
@@ -206,7 +206,7 @@ ORGANIZER_SECRET=${organizerKeypair.secret()}
   await fundAccount(organizerKeypair.publicKey());
 
   // 3. Upload event_contract WASM
-  const eventWasmPath = path.join(WASM_DIR, 'event_contract.wasm');
+  const eventWasmPath = path.join(WASM_DIR, 'event_contract.optimized.wasm');
   if (!fs.existsSync(eventWasmPath)) {
     throw new Error(`WASM not found: ${eventWasmPath}`);
   }
